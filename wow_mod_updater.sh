@@ -50,14 +50,14 @@ MOD_DIR="${HOME}/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_
 #   In most cases, it's the common name of the mod, with
 #   dashes in place of the spaces, in lowercase letters
 #   (e.g. "Deadly Boss Mods" is "deadly-boss-mods")
-MOD_LIST="${HOME}/wow_mods"
+MOD_LIST="${HOME}/wow_mod_updater/wow_mods"
 
 # LOG_FILE contains the path and file name of the file to
 # which the detailed log data should be saved. The various
 # commands which constitute this script will have their
 # stdout and stderr directed into this file. NOTE: this
 # file will be overwritten each time the script is run!
-LOG_FILE="${HOME}/wow_mod_updater.log"
+LOG_FILE="${HOME}/wow_mod_updater/wow_mod_updater.log"
 
 # FRESHEN controls the behavior of the script; if it's set
 # to 1, this will cause the script to clear out the contents
