@@ -18,11 +18,23 @@ Next, build your list of mods. A sample file is provided (wow_mods.sample).
 We'll use it as a starting point:
 `cd wow_mod_updater ; cp wow_mods.sample wow_mods`.
 
+Each line in the `wow_mods` file represents an AddOn. The line has two parts,
+separated by a space. The first part is the name of the source of the AddOn.
+There are presently two valid values: `curse_forge` (for AddOns from Curse) and
+`wow_ace` (for AddOns from wowace.com). The second part (after the space) is
+the name of the AddOn. In most cases, the name will simply be the
+human-readable name with dashes in the place of spaces. But if there is anything
+question, just check the URL on the website (Curse or Wow Ace). The name will
+be encoded into it. For example, we can browse to Deadly Boss Mods on Curse,
+and end up with a URL of:
+https://www.curseforge.com/wow/addons/deadly-boss-mods. Looking at the end of
+the URL, we can see that the proper name is `deadly-boss-mods`.
+
 Once all of the desired AddOns are in the `wow_mods` file, we can move on to
-configuring the script. The defaults that are baked into the script are suitable
-for most Ubuntu + Lutris + Wine configurations. The following configs (all of
-which are toward the top of the script itself) are the ones most likely to
-require attention:
+configuring the script. The defaults that are baked into the script are
+suitable for most Ubuntu + Lutris + Wine configurations. The following configs
+(all of which are toward the top of the script itself) are the ones most likely
+to require attention:
 
 ###### MOD_DIR
 This value is the path where the actual AddOns are located (i.e. where the WoW
@@ -51,6 +63,11 @@ The following is a sample cron file (`/etc/cron.d/wow_mod_updater`):
 
 This crontab will run the updater every morning at 5:00 AM. Adjust as is
 appropriate.
+
+### Troubleshooting
+If something goes wrong, the console output (as the script is running) will
+provide some insight. More detailed information can be found in the log file,
+`wow_mod_updater.log`.
 
 ### Advanced configuration
 There are additional configuration options available in the script. They already
