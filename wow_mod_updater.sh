@@ -1,7 +1,28 @@
 #!/bin/bash
 # World of Warcraft Mod Updater for Linux
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 #### Configuration Variables
+# NOTIFY_SEND_LEVEL can be set to 0 (disabled), 1 (errors) or
+# 2 (full summary). If set to 0, the notify-send command will
+# not be used at all (chose this if desktop notifications are
+# not desired, or if the system does not have notify-send).
+# If set to 1, desktop notifications will only be sent if
+# errors are encountered during the run. If set to 2, a summary
+# of the run will be sent at completion
+NOTIFY_SEND_LEVEL=2
+
+# NOTIFY_SEND_PROC is the name of the process from which the
+# value of DBUS_SESSION_BUS_ADDRESS should be poached. This should
+# be the name of the main X-Windows session process (whatever that
+# happens to be). This value is ignored if NOTIFY_SEND_LEVEL=0
+NOTIFY_SEND_PROC=gnome-session
+
+# MOD_DIR is the place where the AddOns are installed; the
+# place that the game will look for the addons
+MOD_DIR="${HOME}/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_retail_/Interface/AddOns"
+
 # TEMP_STORAGE is the directory to use for temporary storage
 # of downloaded files
 TEMP_STORAGE="/tmp/wow-mods"
@@ -18,19 +39,6 @@ TEMP_ADDONS="${TEMP_STORAGE}/AddOns"
 # summarize, as well as for desktop notifications (if enabled)
 ERROR_FILE="${TEMP_STORAGE}/errors"
 
-# NOTIFY_SEND_LEVEL can be set to 0 (disabled), 1 (errors) or
-# 2 (full summary). If set to 0, the notify-send command will
-# not be used at all (chose this if desktop notifications are
-# not desired, or if the system does not have notify-send).
-# If set to 1, desktop notifications will only be sent if
-# errors are encountered during the run. If set to 2, a summary
-# of the run will be sent at completion
-NOTIFY_SEND_LEVEL=2
-
-# MOD_DIR is the place where the AddOns are installed; the
-# place that the game will look for the addons
-MOD_DIR="${HOME}/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_retail_/Interface/AddOns"
-
 # MOD_LIST contains the path and file name of the file
 # containing all of the mods to be downloaded. The format
 # of this file is:
@@ -46,18 +54,18 @@ MOD_DIR="${HOME}/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_
 #   wow_ace recount
 # Note on Mod Name:
 #   The mod name (for the purpose of this file) appears in
-#   the URL when viewed on the website where it's hosted. 
+#   the URL when viewed on the website where it's hosted.
 #   In most cases, it's the common name of the mod, with
 #   dashes in place of the spaces, in lowercase letters
 #   (e.g. "Deadly Boss Mods" is "deadly-boss-mods")
-MOD_LIST="${HOME}/wow_mod_updater/wow_mods"
+MOD_LIST="${SCRIPT_DIR}/wow_mods"
 
 # LOG_FILE contains the path and file name of the file to
 # which the detailed log data should be saved. The various
 # commands which constitute this script will have their
 # stdout and stderr directed into this file. NOTE: this
 # file will be overwritten each time the script is run!
-LOG_FILE="${HOME}/wow_mod_updater/wow_mod_updater.log"
+LOG_FILE="${SCRIPT_DIR}/wow_mod_updater.log"
 
 # FRESHEN controls the behavior of the script; if it's set
 # to 1, this will cause the script to clear out the contents
@@ -138,13 +146,13 @@ do_unzip() {
     rm -f "${1}"
 }
 
-#### Curse Forge Handler: deals with mod downloads from 
+#### Curse Forge Handler: deals with mod downloads from
 # curse forge
 curse_forge() {
     local final rel
-    
+
     echo "Downloading ${1} from Curse Forge (${OUTFILE})"  | tee -a "${LOG_FILE}"
-    
+
     # Curse Forge uses a JavaScript download redirect page;
     # it sends the uses JavaScript to kick off the download.
     # What we do is scrape this page for the "If the DL didn't
@@ -156,7 +164,7 @@ curse_forge() {
         echo "Reference download of ${1} failed" >> "${ERROR_FILE}"
         return
     fi
-    
+
     # Scrape out the *real* download link
     rel=$(grep -i ">here</a>" ${OUTFILE}.html | awk 'BEGIN{
         RS="</a>"
@@ -172,19 +180,19 @@ curse_forge() {
           }
         }')
     parse_url "${rel}"
-    
+
     # Build up the final URL
     final=$(echo "https://www.curseforge.com${resource}")
     echo "Using URL ${final} saving to ${OUTFILE}" >> "${LOG_FILE}"
-    
+
     # Then download from that URL
-    wget "${final}" --output-document "${OUTFILE}" &>> "${LOG_FILE}"    
+    wget "${final}" --output-document "${OUTFILE}" &>> "${LOG_FILE}"
     if [[ "${?}" != "0" ]]; then
         echo "ERROR: Final download of ${1} failed"  | tee -a "${LOG_FILE}"
         echo "Final download of ${1} failed" >> "${ERROR_FILE}"
         return
     fi
-    
+
     # And finally, unzip the file
     do_unzip ${OUTFILE}
 }
@@ -194,16 +202,16 @@ wow_ace() {
     # WoW Ace allows for direct download, so we can just
     # go for it
     echo "Downloading ${1} from WoW Ace (${OUTFILE})"  | tee -a "${LOG_FILE}"
-    
+
     URL=$(echo "https://www.wowace.com/projects/${1}/files/latest")
-    echo "Using URL ${URL} saving to ${OUTFILE}" >> "${LOG_FILE}"    
+    echo "Using URL ${URL} saving to ${OUTFILE}" >> "${LOG_FILE}"
     wget "${URL}" --output-document "${OUTFILE}" &>> "${LOG_FILE}"
     if [[ "${?}" != "0" ]]; then
         echo "ERROR: Final download of ${1} failed"  | tee -a "${LOG_FILE}"
         echo "Final download of ${1} failed" >> "${ERROR_FILE}"
         return
     fi
-    
+
     do_unzip ${OUTFILE}
 }
 
@@ -236,7 +244,7 @@ while read mod; do
   # named after the MD5 hash of the URL. This *should* make it
   # impossible to step on an existing file
   OUTFILE=$(echo "${mod}" | md5sum | awk '{print $1}')
-  
+
   # Make sure that we're not dealing with a blank line
   LINE_LEN=$(echo "${mod}" | tr -d '[:space:]' | wc -c)
   if [[ "${LINE_LEN}" != "0" ]]; then
@@ -250,7 +258,7 @@ while read mod; do
         ;;
       wow_ace)
         wow_ace "${MOD_NAME}"
-        ;;    
+        ;;
       *)
         echo "Unknown mod source '${MOD_SRC}'" | tee -a "${LOG_FILE}" | tee -a "${ERROR_FILE}"
         ;;
@@ -285,30 +293,30 @@ for check_file in $(ls "${TEMP_ADDONS}"); do
   # existing addon. We'll use this later to see if we need to
   # update the addon
   if [[ -d "${MOD_DIR}/${check_file}" ]]; then
-    EXISTING_MD5=$(find "${MOD_DIR}/${check_file}" -type f -exec md5sum '{}' \; | awk -F'/' '{print $1 $NF}' | md5sum | awk '{print $1}')    
+    EXISTING_MD5=$(find "${MOD_DIR}/${check_file}" -type f -exec md5sum '{}' \; | awk -F'/' '{print $1 $NF}' | md5sum | awk '{print $1}')
   else
     EXISTING_MD5="<no-existing>"
   fi
-  
+
   # Create an MD5 hash of all of the files / file names in the
   # newly downloaded addon. We'll compare this to the MD5 hash
   # that we took of the existing one to determine if we need to
   # update the addons
   TEMP_MD5=$(find "${TEMP_ADDONS}/${check_file}" -type f -exec md5sum '{}' \; | awk -F'/' '{print $1 $NF}' | md5sum | awk '{print $1}')
-  
+
   echo "${check_file}: ${EXISTING_MD5} old, ${TEMP_MD5} new" >> "${LOG_FILE}"
-  
+
   # Check to see if we need to update the addon
   if [[ "${TEMP_MD5}" != "${EXISTING_MD5}" ]]; then
     if [[ "${EXISTING_MD5}" == "<no-existing>" ]]; then
       # If the hash is '<no-existing>', that means that the
-      # directory doesn't exist (this was checked a few 
-      # lines ago). We'll 
+      # directory doesn't exist (this was checked a few
+      # lines ago). We'll
       echo "Adding ${check_file}" | tee -a "${LOG_FILE}"
     else
       echo "Updating ${check_file}" | tee -a "${LOG_FILE}"
     fi
-    
+
     # Move the existing AddOn into the '-old' directory,
     # and copy the new addons into the mods directory
     mv "${MOD_DIR}/${check_file}" "${MOD_DIR}-old/${TIMESTAMP}-${check_file}" &>> "${LOG_FILE}"
@@ -316,7 +324,7 @@ for check_file in $(ls "${TEMP_ADDONS}"); do
   else
     echo "Already up-to-date: ${check_file}" | tee -a "${LOG_FILE}"
   fi
-  
+
   # Clean up the AddOn that we downloaded
   rm -rf "${TEMP_ADDONS}/${check_file}"
 done
@@ -325,13 +333,13 @@ echo "" | tee -a "${LOG_FILE}"
 # Send desktop notifications, if enabled
 if [[ "${NOTIFY_SEND_LEVEL}" == "1" ]]; then
   # NOTIFY_SEND_LEVEL 1 means erros only, so we'll check to see
-  # if there are any errors, and send them if there are  
+  # if there are any errors, and send them if there are
   ERROR_COUNT=$(cat "${ERROR_FILE}" | wc -l)
   if [[ "${ERROR_COUNT}" != "0" ]]; then
-    eval "export $(egrep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pgrep -u $LOGNAME gnome-session)/environ)"
+    eval "export $(egrep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pgrep -u ${LOGNAME} ${NOTIFY_SEND_PROC})/environ)"
     notify-send "WoW Mod Updater" "$(cat ${ERROR_FILE})"
   fi
-  
+
 elif [[ "${NOTIFY_SEND_LEVEL}" == "2" ]]; then
   # NOTIFY_SEND_LEVEL 2 means send a summary of the run. To do
   # this, we'll need to build up a summary
