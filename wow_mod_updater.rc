@@ -1,0 +1,86 @@
+# CHROMIUM_EXECUTABLE is the full path and file name of
+# Chromium browser. It's used by the Selenium webdriver
+# in selenium-downloader.py to download the zip files.
+export CHROMIUM_EXECUTABLE="/usr/bin/chromium-browser"
+
+#### Configuration Variables
+# NOTIFY_SEND_LEVEL can be set to 0 (disabled), 1 (errors) or
+# 2 (full summary). If set to 0, the notify-send command will
+# not be used at all (chose this if desktop notifications are
+# not desired, or if the system does not have notify-send).
+# If set to 1, desktop notifications will only be sent if
+# errors are encountered during the run. If set to 2, a summary
+# of the run will be sent at completion
+export NOTIFY_SEND_LEVEL=2
+
+# NOTIFY_SEND_PROC is the name of the process from which the
+# value of DBUS_SESSION_BUS_ADDRESS should be poached. This should
+# be the name of the main X-Windows session process (whatever that
+# happens to be). This value is ignored if NOTIFY_SEND_LEVEL=0
+export NOTIFY_SEND_PROC=gnome-session
+
+# MOD_DIR is the place where the AddOns are installed; the
+# place that the game will look for the addons
+export MOD_DIR="${HOME}/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_retail_/Interface/AddOns"
+
+# TEMP_STORAGE is the directory to use for temporary storage
+# of downloaded files
+export TEMP_STORAGE="/tmp/wow-mods"
+
+# TEMP_ADDONS is the directory into which the downloaded addons
+# are to be unzipped. NOTE: this is *still* a temporary
+# directory, because this is the place from which the script
+# checks against the installed AddOns to see which ones are
+# in need of update
+export TEMP_ADDONS="${TEMP_STORAGE}/AddOns"
+
+# ERROR_FILE is the name of the file that will accumulate text
+# describing any errors that are encountered. This is used to
+# summarize, as well as for desktop notifications (if enabled)
+export ERROR_FILE="${TEMP_STORAGE}/errors"
+
+# MOD_LIST contains the path and file name of the file
+# containing all of the mods to be downloaded. The format
+# of this file is:
+#   a) One mod per line (order does not matter)
+#   b) Each line contains two fields, separated by a space
+#   c) The first field contains the name of the source
+#   d) The second field contains the name of the mod
+# Valid Sources:
+#   - curse_forge
+#   - wow_ace
+# Examples:
+#   curse_forge deadly-boss-mods
+#   wow_ace recount
+# Note on Mod Name:
+#   The mod name (for the purpose of this file) appears in
+#   the URL when viewed on the website where it's hosted.
+#   In most cases, it's the common name of the mod, with
+#   dashes in place of the spaces, in lowercase letters
+#   (e.g. "Deadly Boss Mods" is "deadly-boss-mods")
+export MOD_LIST="${SCRIPT_DIR}/wow_mods"
+
+# LOG_FILE contains the path and file name of the file to
+# which the detailed log data should be saved. The various
+# commands which constitute this script will have their
+# stdout and stderr directed into this file. NOTE: this
+# file will be overwritten each time the script is run!
+export LOG_FILE="${SCRIPT_DIR}/wow_mod_updater.log"
+
+# CHROMIUM_LOG is the full path and file name of the log
+# file taken of the selenium-download.py output.
+export CHROMIUM_LOG="${SCRIPT_DIR}/selenium-updater.log"
+
+# FRESHEN controls the behavior of the script; if it's set
+# to 1, this will cause the script to clear out the contents
+# of the MOD_DIR before populating with the stuff that was
+# downloaded. This will make it so that the *ONLY* contents
+# of the MOD_DIR will be what was downloaded (or what matched
+# PROTECTED_REGEX)
+export FRESHEN="0"
+
+# PROTECTED_REGEX is used *ONLY* when FRESHEN is set to 1.
+# Any directory name (basename only - NOT the full path)
+# that matches the PROTECTED_REGEX will not be deleted
+# during the freshen process
+export PROTECTED_REGEX="^Blizzard_"
